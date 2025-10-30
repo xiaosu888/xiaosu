@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>温馨提示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        .tip-window {
+            position: fixed;
+            width: 225px;
+            height: 75px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .tip-content {
+            text-align: center;
+            font-size: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            width: calc(100% - 40px);
+            height: calc(100% - 40px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+        }
+
+        @media screen and (max-width: 768px) {
+            .tip-window {
+                width: 150px;
+                height: 50px;
+            }
+
+            .tip-content {
+                font-size: 18px;
+                padding: 10px;
+                width: calc(100% - 20px);
+                height: calc(100% - 20px);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .tip-window {
+                width: 112.5px;
+                height: 40px;
+            }
+
+            .tip-content {
+                font-size: 16px;
+                padding: 8px;
+                width: calc(100% - 16px);
+                height: calc(100% - 16px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const tips = [
+            '多喝水哦~', '保持微笑呀', '每天都要元气满满',
+            '记得吃水果', '保持好心情', '好好爱自己', '我想你了',
+            '梦想成真', '期待下一次见面', '金榜题名',
+            '顺顺利利', '早点休息', '愿所有烦恼都消失',
+            '别熬夜', '今天过得开心嘛', '天冷了，多穿衣服',
+            '继续前进', '你是最可爱的', '保持热情', '相信奇迹',
+            '温柔待人', '也被温柔以待', '心之所向', '素履以往',
+            '生活明朗', '万物可爱', '人间值得', '未来可期',
+            '愿你被世界温柔以待', '每一天都值得珍惜', '做自己的太阳',
+            '不负时光', '勇往直前', '静待花开', '一切美好都会到来',
+            '我永远支持你', '做你自己就好', '生活很美好', '珍惜当下',
+            '阳光总在风雨后', '你是被爱的', '每一天都是新的开始', '勇敢一点',
+            '别放弃', '你很特别', '世界因你而美丽', '保持初心',
+            '简单就是幸福', '记得想我', '你值得最好的', '慢慢变好',
+            '未来可期', '平安喜乐', '照顾好自己', '你是重要的',
+            '永远相信美好', '保持可爱', '今天也要努力呀', '别太在意',
+            '放松心情', '你笑起来真好看', '一切都会如愿', '保持善良',
+            '感恩遇见', '岁月静好', '愿你快乐', '不忘初心'
+        ];
+
+        const bgColors = [
+            'lightpink', 'skyblue', 'lightgreen', 'lavender',
+            'lightyellow', 'plum', 'coral', 'bisque', 'aquamarine',
+            'mistyrose', 'honeydew', 'lavenderblush', 'oldlace'
+        ];
+
+        function createWindow() {
+            let windowWidth, windowHeight;
+
+            if (window.screen.width <= 480) {
+                windowWidth = 112.5;
+                windowHeight = 40;
+            } else if (window.screen.width <= 768) {
+                windowWidth = 150;
+                windowHeight = 50;
+            } else {
+                windowWidth = 225;
+                windowHeight = 75;
+            }
+
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+
+            let x = Math.floor(Math.random() * (screenWidth - windowWidth));
+            let y = Math.floor(Math.random() * (screenHeight - windowHeight));
+
+            x = Math.max(0, Math.min(x, screenWidth - windowWidth));
+            y = Math.max(0, Math.min(y, screenHeight - windowHeight));
+
+            const windowElement = document.createElement('div');
+            windowElement.className = 'tip-window';
+            windowElement.style.left = x + 'px';
+            windowElement.style.top = y + 'px';
+
+            const tip = tips[Math.floor(Math.random() * tips.length)];
+            const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+
+            const contentElement = document.createElement('div');
+            contentElement.className = 'tip-content';
+            contentElement.textContent = tip;
+            contentElement.style.backgroundColor = bgColor;
+
+            windowElement.appendChild(contentElement);
+            document.body.appendChild(windowElement);
+        }
+
+        function createMultipleWindows(count) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    createWindow();
+                }, i * 100);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            createMultipleWindows(180);
+        });
+    </script>
+</body>
+</html>
