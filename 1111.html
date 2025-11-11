@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双十一幸运转盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.hidden {
+            animation: fadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .modal {
+            background: #ffffff;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            animation: modalSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.95) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: #f3f3f3;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .modal-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-title span {
+            font-size: 13px;
+            color: #1f1f1f;
+            font-weight: 400;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #1f1f1f;
+            font-size: 16px;
+            cursor: pointer;
+            width: 46px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 300;
+        }
+
+        .modal-close:hover {
+            background: #e81123;
+            color: #ffffff;
+        }
+
+        .lottery-container {
+            padding: 20px 15px;
+            text-align: center;
+        }
+
+        .lottery-title {
+            font-size: 20px;
+            color: #1f1f1f;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .lottery-subtitle {
+            font-size: 13px;
+            color: #605e5c;
+            margin-bottom: 20px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            height: 320px;
+            margin: 0 auto 30px;
+        }
+
+        @media (max-width: 480px) {
+            .wheel-container {
+                max-width: 280px;
+                height: 280px;
+            }
+            
+            .lottery-title {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .wheel-container {
+                max-width: 250px;
+                height: 250px;
+            }
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ffffff;
+            z-index: 10;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: 10px solid #ffc107;
+            transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            background: conic-gradient(
+                from 0deg,
+                #ff6b6b 0deg 55deg,
+                #ffd93d 55deg 110deg,
+                #6bcf7f 110deg 165deg,
+                #4d96ff 165deg 220deg,
+                #a78bfa 220deg 270deg,
+                #ff1744 270deg 290deg,
+                #14b8a6 290deg 330deg,
+                #fb923c 330deg 360deg
+            );
+        }
+
+        .segment {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 0;
+            height: 0;
+        }
+
+        .segment span {
+            position: absolute;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+            left: 0;
+            top: -90px;
+            transform-origin: center center;
+        }
+
+        .segment-1 { 
+            transform: rotate(27.5deg);
+        }
+        .segment-1 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-2 { 
+            transform: rotate(82.5deg);
+        }
+        .segment-2 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-3 { 
+            transform: rotate(137.5deg);
+        }
+        .segment-3 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-4 { 
+            transform: rotate(192.5deg);
+        }
+        .segment-4 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-5 { 
+            transform: rotate(245deg);
+        }
+        .segment-5 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-6 { 
+            transform: rotate(280deg);
+        }
+        .segment-6 span {
+            font-size: 15px;
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-7 { 
+            transform: rotate(310deg);
+        }
+        .segment-7 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .segment-8 { 
+            transform: rotate(345deg);
+        }
+        .segment-8 span {
+            transform: translateX(-50%) rotate(90deg);
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+            border-radius: 50%;
+            border: 6px solid #fff;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .wheel-center-text {
+            font-size: 38px;
+        }
+
+        .prize-result {
+            display: none;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            animation: resultShow 0.5s ease-out;
+        }
+
+        .prize-result.show {
+            display: block;
+        }
+
+        @keyframes resultShow {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .prize-result-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8b4513;
+        }
+
+        .modal-footer {
+            padding: 16px 24px 24px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .modal-button {
+            background: #0067c0;
+            color: white;
+            font-size: 15px;
+            padding: 12px 36px;
+            border: 1px solid #0067c0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .modal-button:hover {
+            background: #005a9e;
+            border-color: #005a9e;
+            transform: translateY(-1px);
+        }
+
+        .modal-button:active {
+            background: #004275;
+            border-color: #004275;
+            transform: translateY(0);
+        }
+
+        .modal-button:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .claim-button {
+            background: #e81123;
+            border-color: #e81123;
+        }
+
+        .claim-button:hover {
+            background: #c70012;
+            border-color: #c70012;
+        }
+
+        .claim-button:active {
+            background: #a00010;
+            border-color: #a00010;
+        }
+
+        .content {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease-out;
+            pointer-events: none;
+            display: none;
+            position: relative;
+            z-index: 999;
+        }
+
+        .content.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            display: block;
+        }
+
+        .image-container {
+            margin-bottom: 30px;
+        }
+
+        .prank-image {
+            max-width: 500px;
+            width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            color: #333;
+        }
+
+        .message p {
+            font-size: 24px;
+            line-height: 1.8;
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .message p {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message p {
+                font-size: 18px;
+            }
+        }
+
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(99, 102, 241, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #5b21b6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+            user-select: none;
+        }
+
+        .music-control:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+            border-color: rgba(99, 102, 241, 0.6);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .music-control:active {
+            transform: scale(1.05);
+        }
+
+        .music-control.muted {
+            color: #999;
+        }
+
+        .more-ball {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(99, 102, 241, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #5b21b6;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+            user-select: none;
+        }
+
+        .more-ball:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+            border-color: rgba(99, 102, 241, 0.6);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .more-ball:active {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- 弹窗 -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal lottery-modal">
+            <!-- 弹窗标题栏 -->
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="modal-icon">🎁</div>
+                    <span>双十一幸运抽奖</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            
+            <!-- 抽奖转盘 -->
+            <div class="lottery-container" id="lotteryContainer">
+                <h2 class="lottery-title">双十一幸运大转盘</h2>
+                <p class="lottery-subtitle">点击下方按钮开始抽奖</p>
+                
+                <!-- 转盘 -->
+                <div class="wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel" id="wheel">
+                        <div class="segment segment-1" style="--angle: 0deg; --size: 55deg;"><span>谢谢参与</span></div>
+                        <div class="segment segment-2" style="--angle: 55deg; --size: 55deg;"><span>再接再厉</span></div>
+                        <div class="segment segment-3" style="--angle: 110deg; --size: 55deg;"><span>谢谢惠顾</span></div>
+                        <div class="segment segment-4" style="--angle: 165deg; --size: 55deg;"><span>差一点</span></div>
+                        <div class="segment segment-5" style="--angle: 220deg; --size: 50deg;"><span>再来一次</span></div>
+                        <div class="segment segment-6" style="--angle: 270deg; --size: 20deg;"><span>特等奖</span></div>
+                        <div class="segment segment-7" style="--angle: 290deg; --size: 40deg;"><span>谢谢惠顾</span></div>
+                        <div class="segment segment-8" style="--angle: 330deg; --size: 30deg;"><span>差一点点</span></div>
+                    </div>
+                    <div class="wheel-center">
+                        <div class="wheel-center-text">🎁</div>
+                    </div>
+                </div>
+                
+                <!-- 中奖提示 -->
+                <div class="prize-result" id="prizeResult">
+                    <div class="prize-result-text">🎉 恭喜中奖：特等奖！🎉</div>
+                </div>
+            </div>
+            
+            <!-- 弹窗底部 -->
+            <div class="modal-footer">
+                <button class="modal-button" id="lotteryButton" onclick="startLottery()">立即抽奖</button>
+                <button class="modal-button claim-button" id="claimButton" onclick="claimPrize()" style="display: none;">领取奖品</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="content" id="content">
+        <div class="image-container">
+            <!-- 这里可以放置图片 -->
+        </div>
+        <div class="message">
+            <b>
+                <p>想什么呢？</p>
+                <p>祝你光棍节快乐🤣</p>
+            </b>
+        </div>
+    </div>
+
+    <!-- 音乐控制按钮 -->
+    <div class="music-control" id="musicControl" onclick="toggleMusic()">🔇</div>
+
+    <!-- 右下角透明小球 -->
+    <div class="more-ball" onclick="resetPage()">重置</div>
+
+    <!-- 音频元素 -->
+    <audio id="prankAudio" preload="auto" loop>
+        <source src="https://sf5-hl-cdn-tos.douyinstatic.com/obj/ies-music/7537318707513625363.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
+            // 显示抽奖弹窗
+            document.getElementById('modal').style.display = 'flex';
+            
+            // 初始化音乐控制
+            initMusicControl();
+        });
+
+        // 音乐控制变量
+        let isMusicEnabled = false;
+        let audioElement = null;
+
+        // 初始化音乐控制
+        function initMusicControl() {
+            audioElement = document.getElementById('prankAudio');
+            const musicControl = document.getElementById('musicControl');
+            
+            // 设置初始状态
+            musicControl.textContent = '🔇';
+            musicControl.classList.add('muted');
+        }
+
+        // 切换音乐播放状态
+        function toggleMusic() {
+            const musicControl = document.getElementById('musicControl');
+            
+            if (isMusicEnabled) {
+                // 关闭音乐
+                audioElement.pause();
+                musicControl.textContent = '🔇';
+                musicControl.classList.add('muted');
+                isMusicEnabled = false;
+            } else {
+                // 开启音乐
+                audioElement.play().catch(error => {
+                    console.log('音频播放失败:', error);
+                });
+                musicControl.textContent = '🎵';
+                musicControl.classList.remove('muted');
+                isMusicEnabled = true;
+            }
+        }
+
+        // 抽奖功能 - 100%中奖版本
+        function startLottery() {
+            const wheel = document.getElementById('wheel');
+            const lotteryButton = document.getElementById('lotteryButton');
+            const claimButton = document.getElementById('claimButton');
+            const prizeResult = document.getElementById('prizeResult');
+            
+            // 禁用抽奖按钮
+            lotteryButton.disabled = true;
+            lotteryButton.textContent = '抽奖中...';
+            
+            // 隐藏之前的中奖结果
+            prizeResult.style.display = 'none';
+            prizeResult.classList.remove('show');
+            
+            // 100%中奖：固定停在特等奖扇区（第6个扇区，索引5）
+            const baseRotation = 360 * 3; // 3圈
+            const segments = [0, 55, 110, 165, 220, 270, 290, 330]; // 各扇区起始角度
+            const targetSegment = 5; // 固定选择特等奖扇区（索引5）
+            const stopAngle = segments[targetSegment] + Math.random() * 20; // 在特等奖扇区内随机位置停止
+            
+            const totalRotation = baseRotation + (360 - stopAngle);
+            
+            // 应用旋转动画
+            wheel.style.transition = 'transform 3s cubic-bezier(0.2, 0.8, 0.3, 1)';
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            // 3秒后显示结果
+            setTimeout(() => {
+                const prizes = ['谢谢参与', '再接再厉', '谢谢惠顾', '差一点', '再来一次', '特等奖', '谢谢惠顾', '差一点点'];
+                const prizeText = prizes[targetSegment];
+                
+                // 显示中奖结果
+                prizeResult.innerHTML = `<div class="prize-result-text">🎉 恭喜中奖：${prizeText}！🎉</div>`;
+                prizeResult.style.display = 'block';
+                prizeResult.classList.add('show');
+                
+                // 总是显示领取按钮（100%中奖）
+                claimButton.style.display = 'inline-block';
+                lotteryButton.style.display = 'none';
+                
+                // 播放中奖音效（如果音乐开启）
+                if (isMusicEnabled) {
+                    playAudio();
+                }
+            }, 3000);
+        }
+
+        // 领取奖品功能
+        function claimPrize() {
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('content');
+            const prankAudio = document.getElementById('prankAudio');
+            
+            // 隐藏弹窗
+            modal.classList.add('hidden');
+            
+            // 显示主内容（包含指定文字）
+            setTimeout(() => {
+                modal.style.display = 'none';
+                content.style.display = 'block';
+                setTimeout(() => {
+                    content.classList.add('show');
+                }, 50);
+            }, 250);
+            
+            // 播放恶搞音频（如果音乐开启）
+            if (isMusicEnabled && prankAudio) {
+                prankAudio.play().catch(error => {
+                    console.log('音频播放失败:', error);
+                });
+            }
+            
+            // 显示提示信息
+            setTimeout(() => {
+                alert('哈哈，被骗了吧！祝你光棍节快乐！🤣');
+            }, 1000);
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const lotteryButton = document.getElementById('lotteryButton');
+            const claimButton = document.getElementById('claimButton');
+            
+            // 重置转盘状态
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            
+            // 重置按钮状态
+            lotteryButton.disabled = false;
+            lotteryButton.textContent = '立即抽奖';
+            lotteryButton.style.display = 'inline-block';
+            claimButton.style.display = 'none';
+            
+            // 隐藏弹窗
+            modal.classList.add('hidden');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 250);
+        }
+
+        // 播放音频函数
+        function playAudio() {
+            if (audioElement) {
+                audioElement.currentTime = 0; // 从头开始播放
+                audioElement.play().catch(error => {
+                    console.log('音频播放失败:', error);
+                });
+            }
+        }
+
+        // 重置页面
+        function resetPage() {
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('content');
+            const wheel = document.getElementById('wheel');
+            const lotteryButton = document.getElementById('lotteryButton');
+            const claimButton = document.getElementById('claimButton');
+            const prizeResult = document.getElementById('prizeResult');
+            
+            // 重置转盘
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            
+            // 重置按钮
+            lotteryButton.disabled = false;
+            lotteryButton.textContent = '立即抽奖';
+            lotteryButton.style.display = 'inline-block';
+            claimButton.style.display = 'none';
+            
+            // 隐藏结果
+            prizeResult.style.display = 'none';
+            prizeResult.classList.remove('show');
+            
+            // 显示弹窗，隐藏内容
+            content.classList.remove('show');
+            setTimeout(() => {
+                content.style.display = 'none';
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.remove('hidden');
+                }, 50);
+            }, 500);
+        }
+
+        // 防抖函数（防止重复点击）
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 优化抽奖按钮点击（防抖处理）
+        const lotteryButton = document.getElementById('lotteryButton');
+        if (lotteryButton) {
+            lotteryButton.addEventListener('click', debounce(startLottery, 1000));
+        }
+        
+        const claimButton = document.getElementById('claimButton');
+        if (claimButton) {
+            claimButton.addEventListener('click', debounce(claimPrize, 1000));
+        }
+    </script>
+</body>
+</html>
